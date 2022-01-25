@@ -1,9 +1,34 @@
-msg_flag=false     -- flag for debug messages
+--[[
+  * ReaScript Name: Glue media items in time selection
+  * About:
+      Glues a chosen number of adjacent Media Items from the selected tracks within a time selection.
+      It will glue overlapping Media Items in the same track. It will also use the active take, when applicable.
+  * Instructions:
+      1. Make a time selection, and select tracks on which you wish to glue Media Items.
+      2. Run the script, and choose the number of adjacent Media Items you wish to glue. Choosing 0 will glue all Media Items within the time selection.
+  * Author: ca-vlad
+  * Repository: GitHub > ca-vlad > reaper_scripts
+  * Repository URI: https://github.com/ca-vlad/reaper_scripts
+  * Licence: GPL v3
+  * Version: 1.0
+  * Version Date: 2022-01-25
+  * REAPER: 6.43
+  * Extensions:
+--]]
+
+--[[
+* Changelog:
+* v1.0 (2015-02-28)
++ Initial Release
+--]]
+
+
+msg_flag=false  -- flag for debugging messages
 
 function main()
-  
-  reaper.Undo_BeginBlock() 
-  
+
+  reaper.Undo_BeginBlock()
+
   -- User input
   local retval, retvals_csv = reaper.GetUserInputs("Glue groups of adjacent Media Items", 1, "Number of adjacent Media Items", "2")
   if retval == false then
@@ -75,7 +100,7 @@ function main()
   end
 
   reaper.UpdateArrange()
-  
+
   reaper.Undo_EndBlock("Glue items within time selection", -1)
 
 end
