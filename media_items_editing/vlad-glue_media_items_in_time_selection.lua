@@ -10,7 +10,7 @@
   * Repository: GitHub > ca-vlad > reaper_scripts
   * Repository URI: https://github.com/ca-vlad/reaper_scripts
   * Licence: GPL v3
-  * Version: 1.1
+  * Version: 1.2
   * Version Date: 2022-03-02
   * REAPER: 6.43
   * Extensions:
@@ -18,6 +18,8 @@
 
 --[[
 * Changelog:
+* v1.2 (2022-03-08)
+  # Fix a bug where the last media item is glued even if it's the only remaining unglued item in the time selection
 * v1.1 (2022-03-02)
   # Fix a bug in the get_items_in_time_selection_on_track related to loop indexing
   # Add more debugging messages
@@ -27,11 +29,13 @@
 --]]
 
 
-msg_flag=false  -- flag for debugging messages
+msg_flag=true  -- flag for debugging messages
 
 function main()
 
   reaper.Undo_BeginBlock()
+
+  msg("____________")
 
   -- User input
   local retval, retvals_csv = reaper.GetUserInputs("Glue groups of adjacent Media Items", 1, "Number of adjacent Media Items", "2")
@@ -78,8 +82,8 @@ function main()
     local iteration_number = 1
     for _, item in pairs(items_on_track) do
 
-      -- msg("Iteration number is " .. iteration_number)
-      -- msg(_ .. "    " .. reaper.GetTakeName(reaper.GetActiveTake(item)))
+      msg("Iteration number is " .. iteration_number)
+      msg(_ .. "    " .. reaper.GetTakeName(reaper.GetActiveTake(item)))
 
       ok = reaper.SetMediaItemInfo_Value(item, "B_UISEL", 1)
 
@@ -99,8 +103,10 @@ function main()
     end
 
     -- Glue remaining selected MediaItems on track
-    reaper.Main_OnCommand(40362, 0, 0) -- Glue selected MediaItems
-    reaper.Main_OnCommand(40289, 0, 0) -- Deselect MediaItems
+    if iteration_number > 2 then
+      reaper.Main_OnCommand(40362, 0, 0) -- Glue selected MediaItems
+      reaper.Main_OnCommand(40289, 0, 0) -- Deselect MediaItems
+    end
 
   end
 
