@@ -18,6 +18,8 @@
 
 --[[
 * Changelog:
+* v1.3 (2022-04-07)
+  # Add functionality for inserting take markers into the glued items, from the timestamps of the beginning of the original items
 * v1.2 (2022-03-08)
   # Fix a bug where the last media item is glued even if it's the only remaining unglued item in the time selection
 * v1.1 (2022-03-02)
@@ -29,13 +31,13 @@
 --]]
 
 
-msg_flag=true  -- flag for debugging messages
+msg_flag=false  -- flag for debugging messages
 
 function main()
 
   reaper.Undo_BeginBlock()
 
-  msg("____________")
+  -- msg("____________")
 
   -- User input
   local retval, retvals_csv = reaper.GetUserInputs("Glue groups of adjacent Media Items", 1, "Number of adjacent Media Items", "2")
@@ -77,13 +79,17 @@ function main()
 
     local items_on_track = get_items_in_time_selection_on_track(time_start, time_end, track)
 
+    local item_start_times = {}
+
     -- Loop through items within the time selection on track
     -- The iteration number is used to select groups of adjacent Media Items
     local iteration_number = 1
-    for _, item in pairs(items_on_track) do
+    for i, item in pairs(items_on_track) do
 
-      msg("Iteration number is " .. iteration_number)
-      msg(_ .. "    " .. reaper.GetTakeName(reaper.GetActiveTake(item)))
+      item_start_times[i] = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+
+      -- msg("Iteration number is " .. iteration_number)
+      -- msg(i .. "    " .. reaper.GetTakeName(reaper.GetActiveTake(item)))
 
       ok = reaper.SetMediaItemInfo_Value(item, "B_UISEL", 1)
 
@@ -106,6 +112,18 @@ function main()
     if iteration_number > 2 then
       reaper.Main_OnCommand(40362, 0, 0) -- Glue selected MediaItems
       reaper.Main_OnCommand(40289, 0, 0) -- Deselect MediaItems
+    end
+
+    local items_on_track = get_items_in_time_selection_on_track(time_start, time_end, track)
+
+    for i, item in pairs(items_on_track) do
+      -- Apply track markers
+      local take = reaper.GetActiveTake(item)
+      local item_start =  reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+      for j, time in pairs(item_start_times) do
+          reaper.SetTakeMarker(take, -1, "", time - item_start)
+          -- msg(j .. " " .. time)
+      end
     end
 
   end
