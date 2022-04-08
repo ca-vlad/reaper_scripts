@@ -10,8 +10,8 @@
   * Repository: GitHub > ca-vlad > reaper_scripts
   * Repository URI: https://github.com/ca-vlad/reaper_scripts
   * Licence: GPL v3
-  * Version: 1.2
-  * Version Date: 2022-03-02
+  * Version: 1.3
+  * Version Date: 2022-04-07
   * REAPER: 6.43
   * Extensions:
 --]]
