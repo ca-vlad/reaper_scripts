@@ -10,15 +10,23 @@
   * Repository: GitHub > ca-vlad > reaper_scripts
   * Repository URI: https://github.com/ca-vlad/reaper_scripts
   * Licence: GPL v3
-  * Version: 1.0
-  * Version Date: 2022-01-25
+  * Version: 1.3
+  * Version Date: 2022-04-07
   * REAPER: 6.43
   * Extensions:
 --]]
 
 --[[
 * Changelog:
-* v1.0 (2015-02-28)
+* v1.3 (2022-04-07)
+  # Add functionality for inserting take markers into the glued items, from the timestamps of the beginning of the original items
+* v1.2 (2022-03-08)
+  # Fix a bug where the last media item is glued even if it's the only remaining unglued item in the time selection
+* v1.1 (2022-03-02)
+  # Fix a bug in the get_items_in_time_selection_on_track related to loop indexing
+  # Add more debugging messages
+  # Comment out all debugging messages
+* v1.0 (2022-01-25)
 + Initial Release
 --]]
 
@@ -28,6 +36,8 @@ msg_flag=false  -- flag for debugging messages
 function main()
 
   reaper.Undo_BeginBlock()
+
+  -- msg("____________")
 
   -- User input
   local retval, retvals_csv = reaper.GetUserInputs("Glue groups of adjacent Media Items", 1, "Number of adjacent Media Items", "2")
@@ -65,16 +75,21 @@ function main()
     local tracknumber = reaper.GetMediaTrackInfo_Value(track, 'IP_TRACKNUMBER')
 
     local retval, stringNeedBig = reaper.GetSetMediaTrackInfo_String(track, "P_NAME", "", 0)
-    msg("Track number for " .. stringNeedBig .. " is " .. tracknumber)
+    -- msg("Track number for " .. stringNeedBig .. " is " .. tracknumber)
 
     local items_on_track = get_items_in_time_selection_on_track(time_start, time_end, track)
+
+    local item_start_times = {}
 
     -- Loop through items within the time selection on track
     -- The iteration number is used to select groups of adjacent Media Items
     local iteration_number = 1
-    for _, item in pairs(items_on_track) do
+    for i, item in pairs(items_on_track) do
 
-      msg("Iteration number is " .. iteration_number)
+      item_start_times[i] = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+
+      -- msg("Iteration number is " .. iteration_number)
+      -- msg(i .. "    " .. reaper.GetTakeName(reaper.GetActiveTake(item)))
 
       ok = reaper.SetMediaItemInfo_Value(item, "B_UISEL", 1)
 
@@ -83,7 +98,7 @@ function main()
         iteration_number = 1 -- Reset iteration number
         reaper.Main_OnCommand(40362, 0, 0) -- Glue selected MediaItems
         reaper.Main_OnCommand(40289, 0, 0) -- Deselect MediaItems
-        msg("Resetting iteration number")
+        -- msg("Resetting iteration number")
 
       else
 
@@ -94,8 +109,22 @@ function main()
     end
 
     -- Glue remaining selected MediaItems on track
-    reaper.Main_OnCommand(40362, 0, 0) -- Glue selected MediaItems
-    reaper.Main_OnCommand(40289, 0, 0) -- Deselect MediaItems
+    if iteration_number > 2 then
+      reaper.Main_OnCommand(40362, 0, 0) -- Glue selected MediaItems
+      reaper.Main_OnCommand(40289, 0, 0) -- Deselect MediaItems
+    end
+
+    local items_on_track = get_items_in_time_selection_on_track(time_start, time_end, track)
+
+    for i, item in pairs(items_on_track) do
+      -- Apply track markers
+      local take = reaper.GetActiveTake(item)
+      local item_start =  reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+      for j, time in pairs(item_start_times) do
+          reaper.SetTakeMarker(take, -1, "", time - item_start)
+          -- msg(j .. " " .. time)
+      end
+    end
 
   end
 
@@ -116,22 +145,24 @@ function get_items_in_time_selection_on_track(time_start, time_end, track)
   local items = {}
 
   local items_on_track = reaper.CountTrackMediaItems(track)
+  -- msg("    Number of items on track is " .. items_on_track)
+  -- msg("    Time start and time end are " .. time_start .. " " .. time_end)
 
-    for i=0, items_on_track-1 do
+  for i=1, items_on_track do
 
-       local item = reaper.GetTrackMediaItem(track, i)
+      local item = reaper.GetTrackMediaItem(track, i-1)
+    --  msg("    " .. reaper.GetTakeName(reaper.GetActiveTake(item)))
 
-       local item_start = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
-       local item_length = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
-       local item_end = item_start + item_length
+      local item_start = reaper.GetMediaItemInfo_Value(item, "D_POSITION")
+      local item_length = reaper.GetMediaItemInfo_Value(item, "D_LENGTH")
+      local item_end = item_start + item_length
+    --  msg("    Loop " .. i .. ": " .. item_start .. " " .. item_length .. " " .. item_end)
 
-       if item_start >= time_start and item_end <= time_end then
+      if item_start >= time_start and item_end <= time_end then
+        items[i] = item
+      end
 
-          items[i] = item
-
-        end
-
-    end
+  end
 
   reaper.Main_OnCommand(40289, 0, 0) -- Deselect MediaItems
 
@@ -143,4 +174,3 @@ end
 --------------------------------------------------------- END OF UTILITIES
 
 main()
-
