@@ -4,7 +4,6 @@
       Adds all folder tracks on the same depth level, from the entire current project, to the selection.
   * Instructions:
       Select one single folder track and run the script.
-
   * Author: ca-vlad
   * Repository: GitHub > ca-vlad > reaper_scripts
   * Repository URI: https://github.com/ca-vlad/reaper_scripts
