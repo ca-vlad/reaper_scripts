@@ -72,14 +72,13 @@ function has_track_any_fx_enabled(track, track_fx_count)
     local track_fx_enabled = reaper.TrackFX_GetEnabled(track, j)
 
     if track_fx_enabled == true then
-      -- msg("Number of enabled FX is " .. j)
+      -- msg("Enabled FX number is" .. j)
 
       return track_fx_enabled
     end
     j = j + 1
   end
 
-  -- msg("Number of FX is " .. j)
   return false
 
 end
