@@ -1,1 +1,1 @@
-# Vlad's Reaper LUA scripts
+# Vlad's Reaper scripts
